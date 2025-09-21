@@ -22,7 +22,7 @@ Example:
 data.csv: Contains user behavioral data for subscription upgrade predictions.
 Installation
 Clone the repository:
-git clone https://github.com/yourusername/yourrepo.git
+git clone :(https://github.com/AnupamPatil899/UpgradeIQ-Smart-Prediction-of-Subscription-Upgrades-via-Behavioral-Modeling.git)
 Install dependencies:
 pip install -r requirements.txt
 Usage
