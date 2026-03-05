@@ -1,47 +1,57 @@
-# UpgradeIQ-Smart-Prediction-of-Subscription-Upgrades-via-Behavioral-Modeling
-Project Title
-A short description of your project.
-(E.g., Smart Prediction of Subscription Upgrades via Behavioral Modeling)
+# UpgradeIQ: Smart Prediction of Subscription Upgrades via Behavioral Modeling
 
-Table of Contents
-Introduction
-Dataset
-Installation
-Usage
-Python Example: Read Dataset
-Python Example: Write Dataset
-Contributing
-License
-Introduction
-Briefly describe what your project does, its goals, and main features.
+## Introduction
+UpgradeIQ is a machine learning pipeline designed to analyze customer behavioral data and predict subscription changes (such as churn or potential upgrades). By leveraging customer engagement metrics, viewing habits, and support interactions, this project provides actionable insights to help service providers improve retention and tailor subscription offerings.
 
-Dataset
-Describe the dataset used.
-Example:
+## Key Features
+- **Extensive Feature Engineering:** Calculates advanced metrics such as Engagement Score, Support Intensity, Recent Activity Drop, and Total Risk Score.
+- **Handling Imbalanced Data:** Utilizes SMOTE (Synthetic Minority Over-sampling Technique) to address class imbalances in the dataset.
+- **Robust Modeling:** Implements and compares Logistic Regression and XGBoost classifiers.
+- **Comprehensive Evaluation:** Evaluates models using Accuracy, Precision, Recall, F1-Score, ROC-AUC, and AUPRC. It also generates visualizations for ROC curves, Precision-Recall curves, and Feature Importances.
+- **Pipeline Export:** Automatically saves trained models, scalers, and encoders via `joblib` for easy deployment.
 
-data.csv: Contains user behavioral data for subscription upgrade predictions.
-Installation
+## Installation
 Clone the repository:
-git clone :(https://github.com/AnupamPatil899/UpgradeIQ-Smart-Prediction-of-Subscription-Upgrades-via-Behavioral-Modeling.git)
-Install dependencies:
-pip install -r requirements.txt
-Usage
-Python Example: Read Dataset
-import pandas as pd
+```bash
+git clone https://github.com/AnupamPatil899/UpgradeIQ-Smart-Prediction-of-Subscription-Upgrades-via-Behavioral-Modeling.git
+cd UpgradeIQ-Smart-Prediction-of-Subscription-Upgrades-via-Behavioral-Modeling
+```
 
-# Read the CSV dataset
-data = pd.read_csv('data.csv')
-print(data.head())
-Python Example: Write Dataset
-# Assume you have a DataFrame called 'results'
-results = pd.DataFrame({'user_id': [1,2], 'prediction': [0,1]})
+Install the required dependencies:
+```bash
+pip install pandas numpy scikit-learn seaborn matplotlib xgboost imbalanced-learn joblib
+```
 
-# Write to CSV
-results.to_csv('results.csv', index=False)
-print("Saved predictions to results.csv")
-Contributing
-Contributions are welcome!
-Please open issues or submit pull requests.
+## Dataset
+This project requires train and test datasets containing user behavior features such as:
+- `MonthlyCharges`
+- `ViewingHoursPerWeek`
+- `AccountAge`
+- `ContentDownloadsPerMonth`
+- `SupportTicketsPerMonth`
+- `UserRating`
+- `SubscriptionType`
+- `Churn` (Target Variable)
 
-License
-Specify your license here.
+*Note: You may need to adapt the file paths in `upgradeiq.py` to match the location of your datasets.*
+
+## Usage
+Run the main script to start the training and evaluation process:
+```bash
+python upgradeiq.py
+```
+
+The script will:
+1. Load and preprocess the training data.
+2. Perform feature engineering and create composite risk/engagement scores.
+3. Transform categorical variables using One-Hot Encoding.
+4. Balance the training data using SMOTE.
+5. Train Logistic Regression and XGBoost models using cross-validation.
+6. Evaluate the models and generate ROC & AUPRC curves.
+7. Save the best models and pipeline tools to `models/trained_models/`.
+
+## Contributing
+Contributions and suggestions are always welcome! Feel free to open an issue or submit a pull request with new ideas, features, or bug fixes.
+
+## License
+[Add your specific license here, e.g., MIT, GPLv3]
