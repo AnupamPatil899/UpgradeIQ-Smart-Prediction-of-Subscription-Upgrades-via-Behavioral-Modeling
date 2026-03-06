@@ -3,6 +3,17 @@
 ## Introduction
 UpgradeIQ is a machine learning pipeline designed to analyze customer behavioral data and predict subscription changes (such as churn or potential upgrades). By leveraging customer engagement metrics, viewing habits, and support interactions, this project provides actionable insights to help service providers improve retention and tailor subscription offerings.
 
+## 🚀 Live Demo
+
+Try the interactive Streamlit application here:
+
+🔗 https://upgradeiq-demo.streamlit.app
+
+The app allows users to:
+- Input customer behavioral metrics
+- Predict subscription upgrade or churn probability
+- Visualize model insights and feature importance
+
 ## Key Features
 - **Extensive Feature Engineering:** Calculates advanced metrics such as Engagement Score, Support Intensity, Recent Activity Drop, and Total Risk Score.
 - **Handling Imbalanced Data:** Utilizes SMOTE (Synthetic Minority Over-sampling Technique) to address class imbalances in the dataset.
