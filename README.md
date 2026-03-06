@@ -7,7 +7,7 @@ UpgradeIQ is a machine learning pipeline designed to analyze customer behavioral
 
 Try the interactive Streamlit application here:
 
-🔗 https://upgradeiq-demo.streamlit.app
+🔗 http://3.7.62.223:8501/
 
 The app allows users to:
 - Input customer behavioral metrics
