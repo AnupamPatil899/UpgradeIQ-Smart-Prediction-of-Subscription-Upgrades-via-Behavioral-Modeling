@@ -15,7 +15,7 @@
 | Component | Technology | Live URL / Endpoint |
 | :--- | :--- | :--- |
 | **Frontend Web App** | Streamlit (Python 3.11) | [Streamlit Interactive UI](https://upgradeiq-frontend-149522512282.us-central1.run.app)|
-| **Backend REST API** | FastAPI / Uvicorn | Swagger Docs: `https://upgradeiq-backend-149522512282.us-central1.run.app/docs`|
+| **Backend REST API** | FastAPI / Uvicorn | [Swagger Docs](https://upgradeiq-backend-149522512282.us-central1.run.app/docs)|
 
 ---
 
