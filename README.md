@@ -14,8 +14,8 @@
 
 | Component | Technology | Live URL / Endpoint |
 | :--- | :--- | :--- |
-| **Frontend Web App** | Streamlit (Python 3.11) | [Streamlit Interactive UI](http://8.231.82.156:8501/) *(or GCP Cloud Run Frontend)* |
-| **Backend REST API** | FastAPI / Uvicorn | Swagger Docs: `http://localhost:8080/docs` *(or GCP Cloud Run Backend)* |
+| **Frontend Web App** | Streamlit (Python 3.11) | [Streamlit Interactive UI](https://upgradeiq-frontend-149522512282.us-central1.run.app)|
+| **Backend REST API** | FastAPI / Uvicorn | Swagger Docs: `https://upgradeiq-backend-149522512282.us-central1.run.app/docs`|
 
 ---
 
@@ -36,14 +36,14 @@
 ## 🏗️ Repository Architecture
 
 ```
-July_2026/
+Deployment/
 ├── .github/
 │   └── workflows/
 │       └── deploy.yml          # GitHub Actions CI/CD workflow for GCP Cloud Run
 ├── Dockerfile                  # Container spec for FastAPI Backend microservice
 ├── models/
 │   └── v1/
-│       ├── best_model.pkl      # Trained XGBoost classifier
+│       ├── best_model.pkl      # Trained Classifier
 │       ├── one_hot_encoder.pkl # Categorical OneHotEncoder
 │       └── metadata.json       # Column definitions, quantiles, & version metadata
 ├── src/                        # ⚙️ BACKEND MICROSERVICE (FastAPI)
