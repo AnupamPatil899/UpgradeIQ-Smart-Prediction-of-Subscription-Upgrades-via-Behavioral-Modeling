@@ -1,0 +1,27 @@
+# Serving container for the UpgradeIQ churn prediction API.
+# Build:  docker build -t upgradeiq-api .
+# Run:    docker run -p 8080:8080 -e ARTIFACT_DIR=gs://your-bucket/models/v1 upgradeiq-api
+#         (or -e ARTIFACT_DIR=/app/artifacts/v1 if you copy artifacts in for a local test)
+
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# System deps: none needed beyond what pip installs for this stack.
+# Keeping the base image slim keeps build/deploy time and Cloud Run
+# cold-start time down.
+
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY engineering.py predictor.py api.py ./
+
+# Cloud Run injects PORT at runtime; default to 8080 for local `docker run`.
+ENV PORT=8080
+EXPOSE 8080
+
+# ARTIFACT_DIR is NOT set here on purpose — it's passed in at deploy
+# time (Cloud Run env var, or -e flag locally) so the same image can
+# point at v1, v2, v3, etc. without a rebuild.
+
+CMD ["sh", "-c", "uvicorn api:app --host 0.0.0.0 --port ${PORT}"]

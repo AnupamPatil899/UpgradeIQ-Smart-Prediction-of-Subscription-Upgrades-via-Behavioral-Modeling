@@ -1,0 +1,46 @@
+{
+  "quantiles": {
+    "vhpw_q25": 10.763952729232127,
+    "vhpw_q75": 30.219396080376693,
+    "support_q75": 7.0
+  },
+  "num_cols": [
+    "AccountAge",
+    "MonthlyCharges",
+    "TotalCharges",
+    "SubscriptionType",
+    "ViewingHoursPerWeek",
+    "AverageViewingDuration",
+    "ContentDownloadsPerMonth",
+    "UserRating",
+    "SupportTicketsPerMonth",
+    "WatchlistSize",
+    "valueperhourmonthly",
+    "avgmonthlyusage",
+    "EngagementScore",
+    "SupportIntensity",
+    "HighSatisfaction",
+    "ChargesToAge_Ratio",
+    "EngagementSatisfaction",
+    "Highwatching",
+    "RecentActivityDrop",
+    "Low_view_monthly",
+    "LowSatisfaction",
+    "HighSupport",
+    "Total_risk_score"
+  ],
+  "cat_cols": [
+    "PaymentMethod",
+    "PaperlessBilling",
+    "ContentType",
+    "MultiDeviceAccess",
+    "DeviceRegistered",
+    "GenrePreference",
+    "Gender",
+    "ParentalControl",
+    "SubtitlesEnabled"
+  ],
+  "model_version": "xgb_v1",
+  "decision_threshold": 0.5,
+  "auc": 0.7490809257188686
+}

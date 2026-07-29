@@ -1,0 +1,41 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.egg-info/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Git
+.git/
+.gitignore
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Streamlit cache
+.streamlit/cache/
+
+# Local data
+Dataset.zip
+models/
+*.pkl
+*.joblib
+
+# Logs
+*.log
+
+# Tests
+tests/
+
+# Docker
+Dockerfile.old
