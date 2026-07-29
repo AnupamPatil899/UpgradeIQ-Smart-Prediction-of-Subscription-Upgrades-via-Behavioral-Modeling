@@ -1,0 +1,115 @@
+name: CI/CD Pipeline - UpgradeIQ GCP Deployment
+
+on:
+  push:
+    branches:
+      - Deployment
+      - main
+  pull_request:
+    branches:
+      - Deployment
+      - main
+
+env:
+  GCP_REGION: us-central1
+  BACKEND_SERVICE_NAME: upgradeiq-backend
+  FRONTEND_SERVICE_NAME: upgradeiq-frontend
+
+jobs:
+  # ─── CI JOB: SYNTAX & SANITY CHECKS ──────────────────────────────────────
+  ci-test:
+    name: CI - Build Check & Validation
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Backend Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r src/requirements.txt
+
+      - name: Install Frontend Dependencies
+        run: |
+          pip install -r Frontend/requirements.txt
+
+      - name: Run Python Syntax Verification
+        run: |
+          python -m py_compile src/api.py src/predictor.py src/engineering.py Frontend/app.py Frontend/api_client.py Frontend/config.py Frontend/styles.py Frontend/utils.py
+
+  # ─── CD JOB: BUILD & DEPLOY TO GCP CLOUD RUN ──────────────────────────────
+  cd-deploy:
+    name: CD - Deploy to GCP Cloud Run
+    needs: ci-test
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/Deployment' || github.ref == 'refs/heads/main')
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+      
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker for Container Registry (gcr.io)
+        run: |
+          gcloud auth configure-docker --quiet
+
+      # ─── 1. BUILD & DEPLOY FASTAPI BACKEND ─────────────────────────────────
+      - name: Build & Push Backend Docker Image
+        run: |
+          IMAGE_TAG="gcr.io/${{ secrets.GCP_PROJECT_ID }}/${{ env.BACKEND_SERVICE_NAME }}:${{ github.sha }}"
+          IMAGE_LATEST="gcr.io/${{ secrets.GCP_PROJECT_ID }}/${{ env.BACKEND_SERVICE_NAME }}:latest"
+          docker build -t $IMAGE_TAG -t $IMAGE_LATEST -f Dockerfile .
+          docker push $IMAGE_TAG
+          docker push $IMAGE_LATEST
+
+      - name: Deploy Backend Service to Cloud Run
+        run: |
+          gcloud run deploy ${{ env.BACKEND_SERVICE_NAME }} \
+            --image gcr.io/${{ secrets.GCP_PROJECT_ID }}/${{ env.BACKEND_SERVICE_NAME }}:latest \
+            --region ${{ env.GCP_REGION }} \
+            --platform managed \
+            --allow-unauthenticated \
+            --set-env-vars ARTIFACT_DIR=/app/models/v1
+
+      - name: Get Backend Service URL
+        id: get-backend-url
+        run: |
+          BACKEND_URL=$(gcloud run services describe ${{ env.BACKEND_SERVICE_NAME }} --region ${{ env.GCP_REGION }} --format 'value(status.url)')
+          echo "BACKEND_URL=$BACKEND_URL" >> $GITHUB_ENV
+          echo "Backend URL: $BACKEND_URL"
+
+      # ─── 2. BUILD & DEPLOY STREAMLIT FRONTEND ──────────────────────────────
+      - name: Build & Push Frontend Docker Image
+        run: |
+          IMAGE_TAG="gcr.io/${{ secrets.GCP_PROJECT_ID }}/${{ env.FRONTEND_SERVICE_NAME }}:${{ github.sha }}"
+          IMAGE_LATEST="gcr.io/${{ secrets.GCP_PROJECT_ID }}/${{ env.FRONTEND_SERVICE_NAME }}:latest"
+          docker build -t $IMAGE_TAG -t $IMAGE_LATEST -f Frontend/Dockerfile Frontend/
+          docker push $IMAGE_TAG
+          docker push $IMAGE_LATEST
+
+      - name: Deploy Frontend Service to Cloud Run
+        run: |
+          gcloud run deploy ${{ env.FRONTEND_SERVICE_NAME }} \
+            --image gcr.io/${{ secrets.GCP_PROJECT_ID }}/${{ env.FRONTEND_SERVICE_NAME }}:latest \
+            --region ${{ env.GCP_REGION }} \
+            --platform managed \
+            --allow-unauthenticated \
+            --set-env-vars API_URL=${{ env.BACKEND_URL }}
