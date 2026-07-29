@@ -67,15 +67,15 @@ jobs:
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
 
-      - name: Configure Docker for Container Registry (gcr.io)
+      - name: Configure Docker
         run: |
-          gcloud auth configure-docker --quiet
+              gcloud auth configure-docker us-central1-docker.pkg.dev --quiet
 
       # ─── 1. BUILD & DEPLOY FASTAPI BACKEND ─────────────────────────────────
       - name: Build & Push Backend Docker Image
         run: |
-          IMAGE_TAG="gcr.io/${{ secrets.GCP_PROJECT_ID }}/${{ env.BACKEND_SERVICE_NAME }}:${{ github.sha }}"
-          IMAGE_LATEST="gcr.io/${{ secrets.GCP_PROJECT_ID }}/${{ env.BACKEND_SERVICE_NAME }}:latest"
+          IMAGE_TAG="us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/upgradeiq/${{ env.BACKEND_SERVICE_NAME }}:${{ github.sha }}"
+          IMAGE_LATEST="us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/upgradeiq/${{ env.BACKEND_SERVICE_NAME }}:latest"
           docker build -t $IMAGE_TAG -t $IMAGE_LATEST -f Dockerfile .
           docker push $IMAGE_TAG
           docker push $IMAGE_LATEST
@@ -83,7 +83,7 @@ jobs:
       - name: Deploy Backend Service to Cloud Run
         run: |
           gcloud run deploy ${{ env.BACKEND_SERVICE_NAME }} \
-            --image gcr.io/${{ secrets.GCP_PROJECT_ID }}/${{ env.BACKEND_SERVICE_NAME }}:latest \
+            --image us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/upgradeiq/${{ env.BACKEND_SERVICE_NAME }}:latest \
             --region ${{ env.GCP_REGION }} \
             --platform managed \
             --allow-unauthenticated \
@@ -99,8 +99,8 @@ jobs:
       # ─── 2. BUILD & DEPLOY STREAMLIT FRONTEND ──────────────────────────────
       - name: Build & Push Frontend Docker Image
         run: |
-          IMAGE_TAG="gcr.io/${{ secrets.GCP_PROJECT_ID }}/${{ env.FRONTEND_SERVICE_NAME }}:${{ github.sha }}"
-          IMAGE_LATEST="gcr.io/${{ secrets.GCP_PROJECT_ID }}/${{ env.FRONTEND_SERVICE_NAME }}:latest"
+          IMAGE_TAG="us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/upgradeiq/${{ env.FRONTEND_SERVICE_NAME }}:${{ github.sha }}"
+          IMAGE_LATEST="us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/upgradeiq/${{ env.FRONTEND_SERVICE_NAME }}:latest"
           docker build -t $IMAGE_TAG -t $IMAGE_LATEST -f Frontend/Dockerfile Frontend/
           docker push $IMAGE_TAG
           docker push $IMAGE_LATEST
@@ -108,7 +108,7 @@ jobs:
       - name: Deploy Frontend Service to Cloud Run
         run: |
           gcloud run deploy ${{ env.FRONTEND_SERVICE_NAME }} \
-            --image gcr.io/${{ secrets.GCP_PROJECT_ID }}/${{ env.FRONTEND_SERVICE_NAME }}:latest \
+            --image us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/upgradeiq/${{ env.FRONTEND_SERVICE_NAME }}:latest \
             --region ${{ env.GCP_REGION }} \
             --platform managed \
             --allow-unauthenticated \
