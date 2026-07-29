@@ -19,11 +19,11 @@
     "avgmonthlyusage",
     "EngagementScore",
     "SupportIntensity",
+    "RecentActivityDrop",
+    "Highwatching",
     "HighSatisfaction",
     "ChargesToAge_Ratio",
     "EngagementSatisfaction",
-    "Highwatching",
-    "RecentActivityDrop",
     "Low_view_monthly",
     "LowSatisfaction",
     "HighSupport",
@@ -40,7 +40,6 @@
     "ParentalControl",
     "SubtitlesEnabled"
   ],
-  "model_version": "xgb_v1",
-  "decision_threshold": 0.5,
-  "auc": 0.7490809257188686
+  "model_version": "log_model_2",
+  "decision_threshold": 0.5
 }

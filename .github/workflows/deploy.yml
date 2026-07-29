@@ -72,13 +72,20 @@ jobs:
               gcloud auth configure-docker us-central1-docker.pkg.dev --quiet
 
       # ─── 1. BUILD & DEPLOY FASTAPI BACKEND ─────────────────────────────────
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
       - name: Build & Push Backend Docker Image
-        run: |
-          IMAGE_TAG="us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/upgradeiq/${{ env.BACKEND_SERVICE_NAME }}:${{ github.sha }}"
-          IMAGE_LATEST="us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/upgradeiq/${{ env.BACKEND_SERVICE_NAME }}:latest"
-          docker build -t $IMAGE_TAG -t $IMAGE_LATEST -f Dockerfile .
-          docker push $IMAGE_TAG
-          docker push $IMAGE_LATEST
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: |
+            us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/upgradeiq/${{ env.BACKEND_SERVICE_NAME }}:${{ github.sha }}
+            us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/upgradeiq/${{ env.BACKEND_SERVICE_NAME }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
       - name: Deploy Backend Service to Cloud Run
         run: |
@@ -97,13 +104,20 @@ jobs:
           echo "Backend URL: $BACKEND_URL"
 
       # ─── 2. BUILD & DEPLOY STREAMLIT FRONTEND ──────────────────────────────
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
       - name: Build & Push Frontend Docker Image
-        run: |
-          IMAGE_TAG="us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/upgradeiq/${{ env.FRONTEND_SERVICE_NAME }}:${{ github.sha }}"
-          IMAGE_LATEST="us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/upgradeiq/${{ env.FRONTEND_SERVICE_NAME }}:latest"
-          docker build -t $IMAGE_TAG -t $IMAGE_LATEST -f Frontend/Dockerfile Frontend/
-          docker push $IMAGE_TAG
-          docker push $IMAGE_LATEST
+        uses: docker/build-push-action@v6
+        with:
+          context: ./Frontend
+          file: ./Frontend/Dockerfile
+          push: true
+          tags: |
+            us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/upgradeiq/${{ env.FRONTEND_SERVICE_NAME }}:${{ github.sha }}
+            us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/upgradeiq/${{ env.FRONTEND_SERVICE_NAME }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
       - name: Deploy Frontend Service to Cloud Run
         run: |
