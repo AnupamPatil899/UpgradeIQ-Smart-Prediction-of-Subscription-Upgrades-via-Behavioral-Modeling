@@ -1,141 +1,119 @@
-# ⚡ UpgradeIQ: Smart Prediction of Subscription Upgrades & Churn via Behavioral Modeling
+# ⚡ UpgradeIQ: Customer Subscription Churn & Upgrade Intelligence Platform
 
-> **Note on Repository Branch**: This is the **`Deployment`** branch, which contains the production-ready, microservices-based architecture (FastAPI Backend + Streamlit Frontend) deployed to **Google Cloud Run** with automated GitHub Actions CI/CD. For model training code, exploratory data analysis, and notebook experiments, please refer to the model training branches.
-
----
-
-## 📌 Overview
-
-**UpgradeIQ** is an enterprise-grade machine learning application designed to analyze customer behavioral data and predict subscription changes (such as churn or potential tier upgrades). By leveraging key metrics—including viewing habits, engagement scores, support ticket frequency, and account age—UpgradeIQ provides real-time, actionable insights to help customer success teams maximize retention and target upsell opportunities.
+UpgradeIQ is a production-grade machine learning system designed to predict subscription churn and identify expansion/upsell opportunities from customer behavioral data. The system features a decoupled architecture with a **FastAPI** REST prediction engine and a **Streamlit** retention dashboard deployed to **Google Cloud Run** with automated **GitHub Actions CI/CD**.
 
 ---
 
-## 🌐 Live Microservice Deployment
+## 🌐 Live Services
 
-| Component | Technology | Live URL / Endpoint |
+| Service | Stack | URL / Endpoint |
 | :--- | :--- | :--- |
-| **Frontend Web App** | Streamlit (Python 3.11) | [Streamlit Interactive UI](https://upgradeiq-frontend-149522512282.us-central1.run.app)|
-| **Backend REST API** | FastAPI / Uvicorn | [Swagger Docs](https://upgradeiq-backend-149522512282.us-central1.run.app/docs)|
+| **Interactive Dashboard** | Streamlit (Python 3.11) | [Live Frontend App](https://upgradeiq-frontend-149522512282.us-central1.run.app) |
+| **REST Prediction API** | FastAPI / Uvicorn | [Swagger API Documentation](https://upgradeiq-backend-149522512282.us-central1.run.app/docs) |
 
 ---
 
-## 🌟 Key Features
+## 📊 Model Performance & Benchmarks
 
-- **Decoupled Microservice Architecture**: Clean separation between the ML prediction engine (FastAPI) and the user-facing web dashboard (Streamlit).
-- **Extensive Feature Engineering**: Calculates 28+ composite metrics, including:
-  - **Engagement Score**: Weighted combination of downloads, watchlist size, and weekly viewing.
-  - **Support Intensity**: Ticket frequency relative to account tenure.
-  - **Recent Activity Drop**: Flags sudden engagement drop-offs for established accounts.
-  - **Total Risk Score**: Quantile-based composite risk flag sum.
-- **Handling Imbalanced Data**: Utilizes **SMOTE** (Synthetic Minority Over-sampling Technique) to balance class distributions during model training.
-- **High-Performance ML Model**: Powered by **XGBoost Classifier** (ROC-AUC ~ **0.75**) tuned on **243,000+ subscription records**.
-- **Automated CI/CD**: Seamless GitHub Actions workflow deploying containerized Docker images to **GCP Cloud Run** via Artifact Registry.
+The production model (**CatBoost v3**) was trained on **243,000+ subscriber records** using **5-Fold Stratified Cross-Validation** with Bayesian hyperparameter optimization (Optuna TPE) and decision threshold calibration.
+
+| Metric | Baseline | Production CatBoost (v3) | Improvement |
+| :--- | :--- | :--- | :--- |
+| **Recall (Detection Rate)** | 12.04% | **60.88%** | **5× Churn Detection Gain** |
+| **F1-Score** | 0.1973 | **0.4463** | **+126% Balanced Accuracy** |
+| **PR-AUC (Avg Precision)** | 0.2400 | **0.4072** | **2.25× Over Baseline** |
+| **ROC-AUC** | 0.7462 | **0.7533** | **Strict Out-of-Fold Evaluation** |
+| **Precision** | 54.60% (uncalibrated) | **35.23%** | **High-ROI Campaign Targeting** |
+| **Decision Threshold** | 0.50 | **0.22** | **Calibrated for 4.5:1 Class Imbalance** |
 
 ---
 
-## 🏗️ Repository Architecture
+## 🏗️ System Architecture
 
 ```
-Deployment/
+July_2026/
 ├── .github/
 │   └── workflows/
-│       └── deploy.yml          # GitHub Actions CI/CD workflow for GCP Cloud Run
-├── Dockerfile                  # Container spec for FastAPI Backend microservice
+│       └── deploy.yml          # GitHub Actions CI/CD for automated Cloud Run deployments
+├── Dockerfile                  # Container definition for FastAPI backend
 ├── models/
-│   └── v1/
-│       ├── best_model.pkl      # Trained Classifier
-│       ├── one_hot_encoder.pkl # Categorical OneHotEncoder
-│       └── metadata.json       # Column definitions, quantiles, & version metadata
+│   └── v3/                     # Active production artifacts
+│       ├── best_model.pkl      # Tuned CatBoost classifier
+│       ├── one_hot_encoder.pkl # Categorical encoder (zero data leakage)
+│       └── metadata.json       # Feature schema, distribution quantiles, & threshold
 ├── src/                        # ⚙️ BACKEND MICROSERVICE (FastAPI)
-│   ├── api.py                  # REST API endpoints (/health, /predict)
+│   ├── api.py                  # Endpoints (/health, /predict)
 │   ├── predictor.py            # Singleton artifact loader & inference pipeline
-│   ├── engineering.py          # Shared feature engineering logic
-│   ├── generate_metadata.py    # Artifact metadata generator tool
+│   ├── engineering.py          # Pure feature engineering functions
 │   └── requirements.txt        # Backend dependencies
 └── Frontend/                   # 🎨 FRONTEND MICROSERVICE (Streamlit)
-    ├── app.py                  # Interactive user dashboard UI
-    ├── api_client.py           # REST client wrapper for backend communication
-    ├── config.py               # Config with dynamic environment variable fallback
-    ├── styles.py               # Modern dark-mode CSS theme
-    ├── utils.py                # Quantile risk breakdown badges & metric formatting
+    ├── app.py                  # Interactive customer intelligence dashboard
+    ├── api_client.py           # Resilient backend client wrapper
+    ├── config.py               # Runtime environment configuration
+    ├── styles.py               # Dark-mode dashboard design system
+    ├── utils.py                # Behavioral risk badge and scoring utilities
     ├── requirements.txt        # Frontend dependencies
-    └── Dockerfile              # Container spec for Streamlit Frontend
+    └── Dockerfile              # Container definition for Streamlit frontend
 ```
 
 ---
 
-## 📊 Dataset Schema
+## 🔧 Feature Engineering Highlights
 
-The underlying model is trained on subscription dataset attributes including:
-
-- **Account Profile**: `AccountAge`, `SubscriptionType` (Basic / Standard / Premium), `PaymentMethod`, `PaperlessBilling`, `Gender`.
-- **Viewing Behavior**: `ViewingHoursPerWeek`, `AverageViewingDuration`, `ContentDownloadsPerMonth`, `WatchlistSize`, `ContentType`, `GenrePreference`.
-- **User Satisfaction & Support**: `UserRating` (1–5★), `SupportTicketsPerMonth`.
-- **Target Variable**: `Churn` (0 = Retained/Upgrade candidate, 1 = Churn risk).
+The feature engineering layer transforms raw profile and usage data into high-signal behavioral indicators:
+- **Tenure-Spend Consistency**: Evaluates cumulative billing integrity relative to account age and monthly tier.
+- **Frustration Index**: Support ticket volume normalized by weekly viewing hours.
+- **Download Intensity**: Content download rate per weekly viewing hour.
+- **Viewing Session Ratio**: Average viewing session duration relative to weekly watch time.
+- **Engagement Score**: Weighted composite of downloads, watchlist size, and weekly active hours.
+- **Quantile Risk Flags**: Outlier detection on activity drops and support ticket spikes.
 
 ---
 
 ## 🚀 Local Development Setup
 
-### Prerequisites
+### 1. Prerequisites
 - Python 3.11+
-- Virtual environment (`venv` or `uv`)
-
-### 1. Clone & Set Up Virtual Environment
+- Virtual environment (`venv`)
 
 ```bash
+# Clone the deployment branch
 git clone -b Deployment https://github.com/AnupamPatil899/UpgradeIQ-Smart-Prediction-of-Subscription-Upgrades-via-Behavioral-Modeling.git
 cd UpgradeIQ-Smart-Prediction-of-Subscription-Upgrades-via-Behavioral-Modeling
 
-# Create and activate virtual environment
-python -m venv .venv
-# Windows:
-.\.venv\Scripts\activate
-# Linux/macOS:
+# Set up virtual environment
+python3 -m venv .venv
 source .venv/bin/activate
 ```
 
-### 2. Start Backend REST API (FastAPI)
-
+### 2. Start Backend REST API
 ```bash
 pip install -r src/requirements.txt
 python -m uvicorn src.api:app --host 127.0.0.1 --port 8080 --reload
 ```
-*Health Check*: Open `http://localhost:8080/health` or `http://localhost:8080/docs`.
+- API Docs: `http://localhost:8080/docs`
+- Health Check: `http://localhost:8080/health`
 
-### 3. Start Frontend Dashboard (Streamlit)
-
-In a new terminal window:
-
+### 3. Start Frontend Dashboard
+In a separate terminal:
 ```bash
+source .venv/bin/activate
 pip install -r Frontend/requirements.txt
-streamlit run Frontend/app.py --server.port 8501
+API_URL=http://127.0.0.1:8080 streamlit run Frontend/app.py --server.port 8501
 ```
-*App UI*: Opens automatically at `http://localhost:8501`.
+- Web Dashboard: `http://localhost:8501`
 
 ---
 
-## ⚙️ CI/CD & GCP Deployment
+## 🚢 Continuous Integration & Deployment (GCP Cloud Run)
 
-This repository includes a continuous integration and deployment pipeline ([deploy.yml](.github/workflows/deploy.yml)).
-
-Whenever changes are pushed to the `Deployment` branch:
-1. **CI Check**: Verifies dependency compilation and validates code syntax.
-2. **Docker Buildx**: Builds container images for both Backend and Frontend using GitHub Actions caching.
-3. **GCP Artifact Registry**: Pushes container images to Google Artifact Registry.
-4. **Cloud Run Deploy**: Deploys both services to **GCP Cloud Run**, automatically injecting the backend URL into the frontend environment.
-
----
-
-## 🤝 Contributing & Branching Guide
-
-- **`Deployment` Branch (Current)**: Primary branch for production API & UI deployment.
-- **Model Training Branches**: Contain exploratory Jupyter Notebooks (`.ipynb`), model comparison experiments (Logistic Regression vs. XGBoost), and raw training scripts.
-
-Contributions are welcome! Feel free to open an issue or submit a pull request.
+The repository includes a GitHub Actions workflow ([`.github/workflows/deploy.yml`](.github/workflows/deploy.yml)) that automates deployment:
+1. **CI Testing**: Validates code syntax and verifies dependencies.
+2. **Buildx Caching**: Builds optimized multi-layer Docker images for both services.
+3. **Artifact Registry**: Pushes container images to Google Artifact Registry.
+4. **Cloud Run Deployment**: Automatically deploys the backend and frontend to **GCP Cloud Run**, injecting dynamic URLs and artifact configurations.
 
 ---
 
 ## 📄 License
-
-This project is open source under the [MIT License](LICENSE).
+This project is licensed under the [MIT License](LICENSE).
