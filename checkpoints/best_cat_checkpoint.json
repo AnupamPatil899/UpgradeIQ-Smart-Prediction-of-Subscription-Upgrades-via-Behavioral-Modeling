@@ -1,0 +1,22 @@
+{
+  "model_type": "cat",
+  "best_trial_number": 25,
+  "score": 0.39988491493075123,
+  "primary_metric": "pr_auc",
+  "params": {
+    "iterations": 1400,
+    "learning_rate": 0.019131395311570584,
+    "depth": 4,
+    "l2_leaf_reg": 3.0864039085286246,
+    "random_strength": 8.761971101023693,
+    "bagging_temperature": 0.2420552715115004
+  },
+  "cv_metrics": {
+    "oof_pr_auc": 0.39988491493075123,
+    "oof_roc_auc": 0.7477426284431912,
+    "precision": 0.3541,
+    "recall": 0.5907,
+    "f1_score": 0.4428,
+    "optimal_threshold": 0.565
+  }
+}

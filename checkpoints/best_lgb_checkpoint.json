@@ -1,0 +1,26 @@
+{
+  "model_type": "lgb",
+  "best_trial_number": 197,
+  "score": 0.39786209765450115,
+  "primary_metric": "pr_auc",
+  "params": {
+    "n_estimators": 900,
+    "learning_rate": 0.026711844241399392,
+    "num_leaves": 69,
+    "max_depth": 3,
+    "min_child_samples": 68,
+    "subsample": 0.85,
+    "colsample_bytree": 0.65,
+    "scale_pos_weight": 5.5,
+    "reg_alpha": 8.915866223832008,
+    "reg_lambda": 0.9532075022449592
+  },
+  "cv_metrics": {
+    "oof_pr_auc": 0.39786209765450115,
+    "oof_roc_auc": 0.7464828045646199,
+    "precision": 0.3499,
+    "recall": 0.5967,
+    "f1_score": 0.4412,
+    "optimal_threshold": 0.61
+  }
+}
