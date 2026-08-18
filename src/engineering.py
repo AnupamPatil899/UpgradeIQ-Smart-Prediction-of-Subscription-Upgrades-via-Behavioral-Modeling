@@ -1,50 +1,50 @@
 """
-engineering.py
-
-Single source of truth for feature engineering.
-
-This module is imported by BOTH the training script and the serving
-predictor. There is no second copy of this logic anywhere else in the
-repo. That is intentional: it is what prevents train/serve skew, which
-is the class of bug (see the old train_df/test_df leakage) this file
-exists to eliminate.
-
-Quantile thresholds (vhpw_q25, vhpw_q75, support_q75) must be computed
-ONCE at training time, from the training split only, and then reused
-as-is at serving time. They are never recomputed from live/incoming
-data. This module does not compute them — see `compute_quantiles`
-below for that, which training calls once; serving only ever calls
-`add_engineered_features` with quantiles loaded from metadata.json.
+engineering.py — Shared Feature Engineering Module
+Single source of truth for all feature transformations.
+Pure functions, zero I/O, zero side effects. Only depends on pandas and numpy.
 """
 
 import pandas as pd
+import numpy as np
+from typing import Dict, List
 
-
-# Columns required to be present before engineering can run.
-REQUIRED_RAW_COLUMNS = [
+REQUIRED_RAW_COLUMNS: List[str] = [
     "AccountAge",
     "MonthlyCharges",
+    "TotalCharges",
+    "SubscriptionType",
     "ViewingHoursPerWeek",
+    "AverageViewingDuration",
     "ContentDownloadsPerMonth",
-    "WatchlistSize",
-    "SupportTicketsPerMonth",
     "UserRating",
+    "SupportTicketsPerMonth",
+    "WatchlistSize",
 ]
 
-# Keys expected inside the `quantiles` dict passed to add_engineered_features.
-QUANTILE_KEYS = ["vhpw_q25", "vhpw_q75", "support_q75"]
+QUANTILE_KEYS: List[str] = ["vhpw_q25", "vhpw_q75", "support_q75"]
 
 
-def compute_quantiles(df: pd.DataFrame) -> dict:
+def encode_subscription_type(df: pd.DataFrame) -> pd.DataFrame:
     """
-    Compute the quantile thresholds used by feature engineering.
-
-    Call this ONCE during training, on the training split BEFORE any
-    train/test split leakage can occur (i.e. compute on X_train, not
-    on the full dataset). Persist the returned dict into metadata.json
-    so serving can reuse the exact same thresholds.
+    Encode SubscriptionType categorical column to numeric values (Basic: 0, Standard: 1, Premium: 2).
+    Safe for both raw string columns and already numeric columns.
     """
-    _validate_columns(df, ["ViewingHoursPerWeek", "SupportTicketsPerMonth"])
+    df = df.copy()
+    if "SubscriptionType" in df.columns:
+        mapping = {"Basic": 0, "Standard": 1, "Premium": 2}
+        if not pd.api.types.is_numeric_dtype(df["SubscriptionType"]):
+            df["SubscriptionType"] = df["SubscriptionType"].map(mapping).fillna(0).astype(int)
+    return df
+
+
+def compute_quantiles(df: pd.DataFrame) -> Dict[str, float]:
+    """
+    Compute distribution quantiles from training dataset.
+    Must be called ONLY on training partitions (X_train) to prevent data leakage.
+    """
+    for col in ["ViewingHoursPerWeek", "SupportTicketsPerMonth"]:
+        if col not in df.columns:
+            raise ValueError(f"Column '{col}' required to compute quantiles.")
 
     return {
         "vhpw_q25": float(df["ViewingHoursPerWeek"].quantile(0.25)),
@@ -53,27 +53,10 @@ def compute_quantiles(df: pd.DataFrame) -> dict:
     }
 
 
-def add_engineered_features(df: pd.DataFrame, quantiles: dict) -> pd.DataFrame:
+def add_engineered_features(df: pd.DataFrame, quantiles: Dict[str, float]) -> pd.DataFrame:
     """
-    Apply the full set of engineered features to a dataframe.
-
-    Works identically whether `df` has one row (a single serving
-    request) or the full training set — that consistency is the
-    entire point of this function existing as shared code.
-
-    Args:
-        df: raw dataframe with the original schema columns
-            (CustomerID and Churn should already be dropped before
-            this is called; SubscriptionType should already be
-            numerically encoded before this is called).
-        quantiles: dict with keys vhpw_q25, vhpw_q75, support_q75 —
-            must come from `compute_quantiles` at training time, or
-            from a loaded metadata.json at serving time. Never
-            recomputed here.
-
-    Returns:
-        A new dataframe (input is not mutated) with engineered
-        columns appended.
+    Apply feature engineering transformations to a dataframe using given quantile thresholds.
+    Accepts both batch training data and single-row inference payloads.
     """
     _validate_columns(df, REQUIRED_RAW_COLUMNS)
     _validate_quantiles(quantiles)
@@ -83,30 +66,37 @@ def add_engineered_features(df: pd.DataFrame, quantiles: dict) -> pd.DataFrame:
     support_q75 = quantiles["support_q75"]
 
     df = df.copy()
-
-    # small epsilon guards against division by zero on edge-case inputs
-    # (e.g. AccountAge == 0, ViewingHoursPerWeek == 0)
     eps = 1e-9
 
+    # 1. Economic & Tenure Metrics
     df["valueperhourmonthly"] = df["MonthlyCharges"] / (df["ViewingHoursPerWeek"] * 4 + eps)
     df["avgmonthlyusage"] = (df["ViewingHoursPerWeek"] * 4) / (df["AccountAge"] + eps)
+    df["ChargesToAge_Ratio"] = df["MonthlyCharges"] / (df["AccountAge"] + 1)
+    df["TenureSpendConsistency"] = df["TotalCharges"] / (df["AccountAge"] * df["MonthlyCharges"] + eps)
+
+    # 2. Engagement & Interaction Metrics
     df["EngagementScore"] = (
         df["ContentDownloadsPerMonth"] + df["WatchlistSize"] + (df["ViewingHoursPerWeek"] * 4)
     ) / 3
-    df["SupportIntensity"] = df["SupportTicketsPerMonth"] / (df["AccountAge"] + 1)
-    df["HighSatisfaction"] = (df["UserRating"] >= 4.0).astype(int)
-    df["ChargesToAge_Ratio"] = df["MonthlyCharges"] / (df["AccountAge"] + 1)
     df["EngagementSatisfaction"] = df["ViewingHoursPerWeek"] * df["UserRating"]
+    df["DownloadIntensity"] = df["ContentDownloadsPerMonth"] / (df["ViewingHoursPerWeek"] + 1.0)
+    df["ViewingSessionRatio"] = df["AverageViewingDuration"] / ((df["ViewingHoursPerWeek"] * 60 / 7) + eps)
+
+    # 3. Frustration & Support Intensity
+    df["SupportIntensity"] = df["SupportTicketsPerMonth"] / (df["AccountAge"] + 1)
+    df["FrustrationIndex"] = df["SupportTicketsPerMonth"] / (df["ViewingHoursPerWeek"] + 1.0)
+
+    # 4. Behavioral Flags & Threshold Indicators
+    df["HighSatisfaction"] = (df["UserRating"] >= 4.0).astype(int)
+    df["LowSatisfaction"] = (df["UserRating"] <= 2.0).astype(int)
     df["Highwatching"] = (df["ViewingHoursPerWeek"] > vhpw_q75).astype(int)
+    df["Low_view_monthly"] = ((df["ViewingHoursPerWeek"] * 4) < (vhpw_q25 * 4)).astype(int)
+    df["HighSupport"] = (df["SupportTicketsPerMonth"] > support_q75).astype(int)
     df["RecentActivityDrop"] = (
         (df["ViewingHoursPerWeek"] < vhpw_q25) & (df["AccountAge"] > 6)
     ).astype(int)
-    df["Low_view_monthly"] = ((df["ViewingHoursPerWeek"] * 4) < (vhpw_q25 * 4)).astype(int)
-    df["LowSatisfaction"] = (df["UserRating"] <= 2.0).astype(int)
-    df["HighSupport"] = (df["SupportTicketsPerMonth"] > support_q75).astype(int)
-    # Total_risk_score is a 4-term sum. Low_view_session was dropped as a
-    # duplicate of Low_view_monthly during training experimentation — if
-    # this changes again, this is the one place to update it.
+
+    # 5. Composite Risk Score (Cleaned without duplicate flags)
     df["Total_risk_score"] = (
         df["Low_view_monthly"]
         + df["LowSatisfaction"]
@@ -117,38 +107,13 @@ def add_engineered_features(df: pd.DataFrame, quantiles: dict) -> pd.DataFrame:
     return df
 
 
-def encode_subscription_type(df: pd.DataFrame) -> pd.DataFrame:
-    """
-    Map SubscriptionType from string to the numeric encoding used
-    consistently across training and serving.
-
-    Kept as its own small function (rather than a free-floating
-    .replace() call) so both training and serving call the exact
-    same mapping, and so the mapping is only defined in one place.
-    """
-    mapping = {"Basic": 0, "Standard": 1, "Premium": 2}
-    df = df.copy()
-
-    # Checking `dtype == object` is not reliable across pandas versions —
-    # newer pandas can default string columns to a dedicated string dtype
-    # rather than `object`. Checking "is this NOT numeric" instead is
-    # correct regardless of which string dtype pandas happens to use.
-    if not pd.api.types.is_numeric_dtype(df["SubscriptionType"]):
-        unknown = set(df["SubscriptionType"].unique()) - set(mapping.keys())
-        if unknown:
-            raise ValueError(f"Unknown SubscriptionType value(s): {unknown}")
-        df["SubscriptionType"] = df["SubscriptionType"].map(mapping)
-
-    return df
-
-
-def _validate_columns(df: pd.DataFrame, required_columns: list) -> None:
+def _validate_columns(df: pd.DataFrame, required_columns: List[str]) -> None:
     missing = [c for c in required_columns if c not in df.columns]
     if missing:
-        raise ValueError(f"Missing required column(s) for feature engineering: {missing}")
+        raise ValueError(f"Missing required columns for feature engineering: {missing}")
 
 
-def _validate_quantiles(quantiles: dict) -> None:
+def _validate_quantiles(quantiles: Dict[str, float]) -> None:
     missing = [k for k in QUANTILE_KEYS if k not in quantiles]
     if missing:
-        raise ValueError(f"Missing required quantile key(s): {missing}")
+        raise ValueError(f"Missing required quantile keys: {missing}")

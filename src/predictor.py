@@ -156,4 +156,12 @@ def _read_bytes_from_gcs(artifact_dir: str, filename: str) -> bytes:
 
 
 def _hstack(x_num, x_cat):
-    return hstack([x_num, x_cat])
+    import numpy as np
+    if hasattr(x_cat, "toarray"):
+        x_cat = x_cat.toarray()
+    if len(x_num.shape) == 1:
+        x_num = x_num.reshape(1, -1)
+    if len(x_cat.shape) == 1:
+        x_cat = x_cat.reshape(1, -1)
+    return np.hstack([x_num, x_cat])
+
