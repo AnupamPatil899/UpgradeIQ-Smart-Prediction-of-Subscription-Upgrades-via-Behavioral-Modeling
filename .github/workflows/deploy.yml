@@ -94,7 +94,7 @@ jobs:
             --region ${{ env.GCP_REGION }} \
             --platform managed \
             --allow-unauthenticated \
-            --set-env-vars ARTIFACT_DIR=/app/models/v1
+            --set-env-vars ARTIFACT_DIR=/app/models/v3
 
       - name: Get Backend Service URL
         id: get-backend-url
