@@ -15,6 +15,13 @@
 
 ---
 
+> [!NOTE]
+> **Repository Branch Navigation**:
+> - **`Deployment` (Default / Active Branch)**: Production microservices architecture (FastAPI Backend + Streamlit Dashboard), Docker container definitions, automated GCP Cloud Run CI/CD, and serialized model artifacts (`models/v3/`).
+> - **[`Training` Branch](https://github.com/AnupamPatil899/UpgradeIQ-Smart-Prediction-of-Subscription-Upgrades-via-Behavioral-Modeling/tree/Training)**: Complete offline training pipeline, leak-free preprocessing, 5-Fold Stratified Cross-Validation, 1,500+ trial Bayesian HPO sweep (Optuna TPE), and checkpointing engine.
+
+---
+
 ## 📌 Overview
 
 **UpgradeIQ** is an enterprise machine learning platform engineered to identify subscription churn risk and pinpoint upsell/tier upgrade candidates from customer behavioral metrics. Built on **243,000+ subscription records**, the system features a decoupled microservices architecture with a **FastAPI** REST prediction engine and a **Streamlit** user dashboard deployed to **Google Cloud Run** with automated **GitHub Actions CI/CD**.
@@ -60,7 +67,7 @@ The production classifier (**CatBoost v3**) was selected following an extensive 
 ```
 
 ```
-July_2026/
+Upgradeiq/
 ├── .github/
 │   └── workflows/
 │       └── deploy.yml          # GitHub Actions CI/CD for automated Cloud Run deployments
@@ -171,5 +178,24 @@ Whenever changes are pushed to the `Deployment` branch:
 
 ---
 
+## 🔬 Model Training & Offline Experimentation
+
+The offline model training, feature extraction, and hyperparameter optimization suite is maintained on the dedicated **[`Training` branch](https://github.com/AnupamPatil899/UpgradeIQ-Smart-Prediction-of-Subscription-Upgrades-via-Behavioral-Modeling/tree/Training)**.
+
+Key training highlights in the `Training` branch:
+- **Leak-Free Data Ingestion**: Quantiles and categorical encoders are computed strictly on training partitions during 5-Fold Stratified Cross-Validation.
+- **Automated Bayesian HPO**: Optuna Tree-structured Parzen Estimator (TPE) search running **1,500+ trials** across CatBoost, XGBoost, and LightGBM.
+- **Decision Threshold Calibration**: Mathematical threshold search maximizing $F_1$ and churn recall on imbalanced distributions.
+- **Persistent State & Checkpoints**: SQLite trial tracking (`optuna_study.db`) and automated champion checkpoint saving.
+
+To explore training scripts, run local cross-validation, or launch hyperparameter tuning sweeps:
+```bash
+git checkout Training
+```
+For detailed training documentation, refer to the [Training Branch README](https://github.com/AnupamPatil899/UpgradeIQ-Smart-Prediction-of-Subscription-Upgrades-via-Behavioral-Modeling/tree/Training).
+
+---
+
 ## 📄 License
 This project is open-source and licensed under the [MIT License](LICENSE).
+
