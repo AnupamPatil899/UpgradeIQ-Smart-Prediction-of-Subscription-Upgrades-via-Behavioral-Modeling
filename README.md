@@ -1,34 +1,63 @@
 # ⚡ UpgradeIQ: Customer Subscription Churn & Upgrade Intelligence Platform
 
-UpgradeIQ is a production-grade machine learning system designed to predict subscription churn and identify expansion/upsell opportunities from customer behavioral data. The system features a decoupled architecture with a **FastAPI** REST prediction engine and a **Streamlit** retention dashboard deployed to **Google Cloud Run** with automated **GitHub Actions CI/CD**.
+[![Live App](https://img.shields.io/badge/Live_Dashboard-Google_Cloud_Run-4285F4?style=for-the-badge&logo=googlecloud&logoColor=white)](https://upgradeiq-frontend-149522512282.us-central1.run.app)
+[![API Docs](https://img.shields.io/badge/API_Docs-FastAPI_Swagger-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://upgradeiq-backend-149522512282.us-central1.run.app/docs)
+
+[![Python 3.11](https://img.shields.io/badge/Python-3.11-3776AB.svg?logo=python&logoColor=white)](https://www.python.org/)
+[![CatBoost](https://img.shields.io/badge/CatBoost-v1.2%2B-FFCC00.svg?logo=catboost&logoColor=black)](https://catboost.ai/)
+[![Scikit-Learn](https://img.shields.io/badge/scikit--learn-1.5%2B-F7931E.svg?logo=scikitlearn&logoColor=white)](https://scikit-learn.org/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688.svg?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
+[![Streamlit](https://img.shields.io/badge/Streamlit-1.40-FF4B4B.svg?logo=streamlit&logoColor=white)](https://streamlit.io/)
+[![Docker](https://img.shields.io/badge/Docker-Ready-2496ED.svg?logo=docker&logoColor=white)](https://www.docker.com/)
+[![Google Cloud Run](https://img.shields.io/badge/GCP-Cloud_Run-4285F4.svg?logo=googlecloud&logoColor=white)](https://cloud.google.com/run)
+[![CI/CD](https://img.shields.io/badge/CI%2FCD-GitHub_Actions-2088FF.svg?logo=githubactions&logoColor=white)](https://github.com/features/actions)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 ---
 
-## 🌐 Live Services
+## 📌 Overview
 
-| Service | Stack | URL / Endpoint |
+**UpgradeIQ** is an enterprise machine learning platform engineered to identify subscription churn risk and pinpoint upsell/tier upgrade candidates from customer behavioral metrics. Built on **243,000+ subscription records**, the system features a decoupled microservices architecture with a **FastAPI** REST prediction engine and a **Streamlit** user dashboard deployed to **Google Cloud Run** with automated **GitHub Actions CI/CD**.
+
+---
+
+## 🌐 Live Microservice Endpoints
+
+| Service | Technology | Live URL / Endpoint |
 | :--- | :--- | :--- |
-| **Interactive Dashboard** | Streamlit (Python 3.11) | [Live Frontend App](https://upgradeiq-frontend-149522512282.us-central1.run.app) |
+| **Interactive Dashboard** | Streamlit (Python 3.11) | [Streamlit Web UI](https://upgradeiq-frontend-149522512282.us-central1.run.app) |
 | **REST Prediction API** | FastAPI / Uvicorn | [Swagger API Documentation](https://upgradeiq-backend-149522512282.us-central1.run.app/docs) |
 
 ---
 
 ## 📊 Model Performance & Benchmarks
 
-The production model (**CatBoost v3**) was trained on **243,000+ subscriber records** using **5-Fold Stratified Cross-Validation** with Bayesian hyperparameter optimization (Optuna TPE) and decision threshold calibration.
+The production classifier (**CatBoost v3**) was selected following an extensive **1,500+ trial Bayesian hyperparameter sweep (Optuna TPE)** with **5-Fold Stratified Cross-Validation**, leak-free preprocessing, and decision threshold calibration.
 
-| Metric | Baseline | Production CatBoost (v3) | Improvement |
+| Metric | Baseline | Production CatBoost (v3) | Business Impact |
 | :--- | :--- | :--- | :--- |
-| **Recall (Detection Rate)** | 12.04% | **60.88%** | **5× Churn Detection Gain** |
+| **Recall (Churn Detection Rate)** | 12.04% | **60.88%** | **🔥 5× Gain** (Catches ~61% of all churners) |
 | **F1-Score** | 0.1973 | **0.4463** | **+126% Balanced Accuracy** |
-| **PR-AUC (Avg Precision)** | 0.2400 | **0.4072** | **2.25× Over Baseline** |
+| **PR-AUC (Average Precision)** | 0.2400 | **0.4072** | **2.25× Over Baseline** |
 | **ROC-AUC** | 0.7462 | **0.7533** | **Strict Out-of-Fold Evaluation** |
-| **Precision** | 54.60% (uncalibrated) | **35.23%** | **High-ROI Campaign Targeting** |
+| **Precision** | 54.60% (uncalibrated) | **35.23%** | **High-ROI Retention Campaign Targeting** |
 | **Decision Threshold** | 0.50 | **0.22** | **Calibrated for 4.5:1 Class Imbalance** |
 
 ---
 
-## 🏗️ System Architecture
+## 🏗️ System Architecture & Execution Flow
+
+```
+┌─────────────────────────┐          HTTP / JSON          ┌─────────────────────────┐
+│   Streamlit Frontend    │  ───────────────────────────► │     FastAPI Backend     │
+│ (Interactive Dashboard) │  ◄─────────────────────────── │  (Inference Microservice)│
+└─────────────────────────┘      Churn Probability &      └────────────┬────────────┘
+                                   Risk Factor Flags                   │
+                                                          ┌────────────┴────────────┐
+                                                          │   CatBoost v3 Engine    │
+                                                          │  (Calibrated Threshold) │
+                                                          └─────────────────────────┘
+```
 
 ```
 July_2026/
@@ -58,15 +87,44 @@ July_2026/
 
 ---
 
-## 🔧 Feature Engineering Highlights
+## ⚡ Quick Test with `curl`
 
-The feature engineering layer transforms raw profile and usage data into high-signal behavioral indicators:
-- **Tenure-Spend Consistency**: Evaluates cumulative billing integrity relative to account age and monthly tier.
-- **Frustration Index**: Support ticket volume normalized by weekly viewing hours.
-- **Download Intensity**: Content download rate per weekly viewing hour.
-- **Viewing Session Ratio**: Average viewing session duration relative to weekly watch time.
-- **Engagement Score**: Weighted composite of downloads, watchlist size, and weekly active hours.
-- **Quantile Risk Flags**: Outlier detection on activity drops and support ticket spikes.
+You can test the live prediction API directly from your terminal:
+
+```bash
+curl -X POST "https://upgradeiq-backend-149522512282.us-central1.run.app/predict" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "AccountAge": 12,
+    "MonthlyCharges": 65.5,
+    "TotalCharges": 786.0,
+    "SubscriptionType": "Standard",
+    "PaymentMethod": "Credit card",
+    "PaperlessBilling": "Yes",
+    "ContentType": "Both",
+    "MultiDeviceAccess": "Yes",
+    "DeviceRegistered": "TV",
+    "ViewingHoursPerWeek": 14.5,
+    "AverageViewingDuration": 85.0,
+    "ContentDownloadsPerMonth": 4,
+    "GenrePreference": "Action",
+    "UserRating": 4.2,
+    "SupportTicketsPerMonth": 1,
+    "Gender": "Female",
+    "WatchlistSize": 8,
+    "ParentalControl": "No",
+    "SubtitlesEnabled": "Yes"
+  }'
+```
+
+**Sample Response**:
+```json
+{
+  "churn_probability": 0.4626,
+  "churn_prediction": 1,
+  "model_version": "v3"
+}
+```
 
 ---
 
@@ -77,16 +135,14 @@ The feature engineering layer transforms raw profile and usage data into high-si
 - Virtual environment (`venv`)
 
 ```bash
-# Clone the deployment branch
 git clone -b Deployment https://github.com/AnupamPatil899/UpgradeIQ-Smart-Prediction-of-Subscription-Upgrades-via-Behavioral-Modeling.git
 cd UpgradeIQ-Smart-Prediction-of-Subscription-Upgrades-via-Behavioral-Modeling
 
-# Set up virtual environment
 python3 -m venv .venv
 source .venv/bin/activate
 ```
 
-### 2. Start Backend REST API
+### 2. Start Backend REST API (FastAPI)
 ```bash
 pip install -r src/requirements.txt
 python -m uvicorn src.api:app --host 127.0.0.1 --port 8080 --reload
@@ -94,7 +150,7 @@ python -m uvicorn src.api:app --host 127.0.0.1 --port 8080 --reload
 - API Docs: `http://localhost:8080/docs`
 - Health Check: `http://localhost:8080/health`
 
-### 3. Start Frontend Dashboard
+### 3. Start Frontend Dashboard (Streamlit)
 In a separate terminal:
 ```bash
 source .venv/bin/activate
@@ -107,13 +163,13 @@ API_URL=http://127.0.0.1:8080 streamlit run Frontend/app.py --server.port 8501
 
 ## 🚢 Continuous Integration & Deployment (GCP Cloud Run)
 
-The repository includes a GitHub Actions workflow ([`.github/workflows/deploy.yml`](.github/workflows/deploy.yml)) that automates deployment:
-1. **CI Testing**: Validates code syntax and verifies dependencies.
-2. **Buildx Caching**: Builds optimized multi-layer Docker images for both services.
+Whenever changes are pushed to the `Deployment` branch:
+1. **CI Testing**: Validates Python syntax and dependency integrity.
+2. **Docker Buildx**: Builds optimized multi-layer Docker container images.
 3. **Artifact Registry**: Pushes container images to Google Artifact Registry.
-4. **Cloud Run Deployment**: Automatically deploys the backend and frontend to **GCP Cloud Run**, injecting dynamic URLs and artifact configurations.
+4. **Cloud Run Deployment**: Deploys both services to **GCP Cloud Run**, dynamically linking the backend URL into the frontend environment.
 
 ---
 
 ## 📄 License
-This project is licensed under the [MIT License](LICENSE).
+This project is open-source and licensed under the [MIT License](LICENSE).
