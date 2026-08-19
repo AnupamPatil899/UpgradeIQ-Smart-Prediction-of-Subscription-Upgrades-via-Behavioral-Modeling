@@ -24,7 +24,7 @@ The engine combines **5-Fold Stratified Cross-Validation**, a **Hybrid Random Se
 Results evaluated across **243,000+ subscriber records** with 5-Fold Stratified Cross-Validation:
 
 | Model Architecture | Total Trials | PR-AUC (Avg Precision) | ROC-AUC | Recall | Precision | F1-Score | Status |
-| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :--- |
 | **CatBoost (v3)** 🥇 | 500 | **0.4072** | **0.7533** | **60.88%** | **35.23%** | **0.4463** | **Production Champion** |
 | **XGBoost** 🥈 | 500 | 0.3989 | 0.7472 | 60.08% | 34.98% | 0.4422 | High Generalization |
 | **LightGBM** 🥉 | 500 | 0.3979 | 0.7465 | 59.67% | 34.99% | 0.4412 | Fast Training Speed |
