@@ -95,15 +95,18 @@ def _ensure_loaded() -> None:
 
     artifact_dir = os.environ.get("ARTIFACT_DIR")
     if not artifact_dir:
-        # Fallback to local models/v1 directory relative to workspace root
+        # Fallback to local models/v3 (or v1) directory relative to workspace root
         base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        default_dir = os.path.join(base_dir, "models", "v1")
-        if os.path.exists(default_dir):
-            artifact_dir = default_dir
+        v3_dir = os.path.join(base_dir, "models", "v3")
+        v1_dir = os.path.join(base_dir, "models", "v1")
+        if os.path.exists(v3_dir):
+            artifact_dir = v3_dir
+        elif os.path.exists(v1_dir):
+            artifact_dir = v1_dir
         else:
             raise RuntimeError(
-                "ARTIFACT_DIR environment variable is not set and fallback path "
-                f"({default_dir}) was not found. Please set ARTIFACT_DIR."
+                "ARTIFACT_DIR environment variable is not set and fallback paths "
+                f"({v3_dir} / {v1_dir}) were not found. Please set ARTIFACT_DIR."
             )
 
     _model = _load_pickle(artifact_dir, "best_model.pkl")
